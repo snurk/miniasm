@@ -15,8 +15,8 @@ void ma_opt_init(ma_opt_t *opt)
 
 	opt->gap_fuzz = 1000;
 	opt->n_rounds = 2;
-	opt->bub_dist = 50000;
-	opt->max_ext = 4;
+	opt->bub_dist = 0;
+	opt->max_ext = 0;
 	opt->min_ovlp_drop_ratio = .5;
 	opt->max_ovlp_drop_ratio = .7;
 	opt->final_ovlp_drop_ratio = .8;

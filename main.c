@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
     else if (c == 'g') opt.gap_fuzz = atoi(optarg);
     else if (c == 'h') opt.max_hang = atoi(optarg);
     else if (c == 'I') opt.int_frac = atof(optarg);
-    //else if (c == 'e') opt.max_ext = atoi(optarg);
+    else if (c == 'e') opt.max_ext = atoi(optarg);
     else if (c == 'f') fn_reads = optarg;
     else if (c == 'p') outfmt = optarg;
     //else if (c == '1') no_first = 1;
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "  Layout:\n");
     fprintf(stderr, "    -g INT      max gap differences between reads for trans-reduction [%d]\n", opt.gap_fuzz);
     fprintf(stderr, "    -d INT      max distance for bubble popping [%d]\n", opt.bub_dist);
-    //fprintf(stderr, "    -e INT      small unitig threshold [%d]\n", opt.max_ext);
+    fprintf(stderr, "    -e INT      small unitig threshold [%d]\n", opt.max_ext);
     fprintf(stderr, "    -f FILE     read sequences []\n");
     fprintf(stderr, "    -n INT      rounds of short overlap removal [%d]\n", opt.n_rounds);
     fprintf(stderr, "    -r FLOAT[,FLOAT]\n");
@@ -158,11 +158,19 @@ int main(int argc, char *argv[])
       fprintf(stderr, "[M::%s] ===> Transitive reduction <===\n", __func__);
       asg_arc_del_trans(sg, opt.gap_fuzz);
     }
-    //if (stage >= 7) {
-    //  fprintf(stderr, "[M::%s] ===> Step 4.2: initial tip cutting and bubble popping <===\n", __func__);
-    //  asg_cut_tip(sg, opt.max_ext);
-    //  asg_pop_bubble(sg, opt.bub_dist);
-    //}
+
+    if (stage >= 7) {
+      if (opt.max_ext > 0) {
+        fprintf(stderr, "[M::%s] ===> Initial tip cutting <===\n", __func__);
+        asg_cut_tip(sg, opt.max_ext);
+      }
+
+      if (opt.bub_dist > 0) {
+        fprintf(stderr, "[M::%s] ===> Initial bubble popping <===\n", __func__);
+        asg_pop_bubble(sg, opt.bub_dist);
+      }
+    }
+
     if (stage >= 9) {
       fprintf(stderr, "[M::%s] ===> Cutting short overlaps (%d rounds in total) <===\n", __func__, opt.n_rounds);
       for (i = 0; i < opt.n_rounds; ++i) {
