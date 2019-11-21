@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
   ma_opt_init(&opt);
   //while ((c = getopt(argc, argv, "n:m:s:c:S:i:d:g:o:h:I:r:f:e:p:12VBRbF:")) >= 0) {
-  while ((c = getopt(argc, argv, "n:m:s:c:S:d:g:o:h:I:r:f:p:VBb:")) >= 0) {
+  while ((c = getopt(argc, argv, "n:m:s:c:S:d:g:o:h:I:r:f:e:p:VBb:")) >= 0) {
     if (c == 'm') opt.min_match = atoi(optarg);
     //else if (c == 'i') opt.min_iden = atof(optarg);
     else if (c == 's') opt.min_span = atoi(optarg);
