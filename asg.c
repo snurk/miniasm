@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "asg.h"
 #include "kvec.h"
+#include <unordered_map>
 
 #include "ksort.h"
 #define asg_arc_key(a) ((a).ul)
@@ -148,37 +149,51 @@ void asg_symm(asg_t *g)
 int asg_arc_del_trans(asg_t *g, int fuzz)
 {
 	uint8_t *mark;
+	
 	uint32_t v, n_vtx = g->n_seq * 2, n_reduced = 0;
-
 	mark = (uint8_t*)calloc(n_vtx, 1);
 	for (v = 0; v < n_vtx; ++v) {
-		uint32_t L, i, nv = asg_arc_n(g, v);
+		uint32_t nv = asg_arc_n(g, v);
 		asg_arc_t *av = asg_arc_a(g, v);
 		if (nv == 0) continue; // no hits
 		if (g->seq[v>>1].del) {
-			for (i = 0; i < nv; ++i) av[i].del = 1, ++n_reduced;
+			for (uint32_t i = 0; i < nv; ++i) av[i].del = 1, ++n_reduced;
 			continue;
 		}
-		for (i = 0; i < nv; ++i) mark[av[i].v] = 1;
-		L = asg_arc_len(av[nv-1]) + fuzz;
-		for (i = 0; i < nv; ++i) {
+
+		std::unordered_map<uint32_t, uint32_t> arc_lens;
+		for (uint32_t i = 0; i < nv; ++i) {
+			mark[av[i].v] = 1;
+			arc_lens[av[i].v] = asg_arc_len(av[i]);
+		}
+
+		uint32_t L = asg_arc_len(av[nv-1]) + fuzz;
+		for (uint32_t i = 0; i < nv; ++i) {
 			uint32_t w = av[i].v;
-			uint32_t j, nw = asg_arc_n(g, w);
+			uint32_t nw = asg_arc_n(g, w);
 			asg_arc_t *aw = asg_arc_a(g, w);
-			if (mark[av[i].v] != 1) continue;
-			for (j = 0; j < nw && asg_arc_len(aw[j]) + asg_arc_len(av[i]) <= L; ++j)
-				if (mark[aw[j].v]) mark[aw[j].v] = 2;
+			if (mark[w] != 1) continue;
+			for (uint32_t j = 0; j < nw; ++j) {
+				uint32_t sum = asg_arc_len(aw[j]) + asg_arc_len(av[i]);
+				if (sum > L) break;
+				uint32_t x = aw[j].v;
+				if (mark[x]) {
+					assert(arc_lens.count(x));
+					if (sum < arc_lens[x] + fuzz && sum + fuzz > arc_lens[x])
+						mark[aw[j].v] = 2;
+				}
+			}
 		}
 		#if 0
-		for (i = 0; i < nv; ++i) {
+		for (uint32_t i = 0; i < nv; ++i) {
 			uint32_t w = av[i].v;
-			uint32_t j, nw = asg_arc_n(g, w);
+			uint32_t nw = asg_arc_n(g, w);
 			asg_arc_t *aw = asg_arc_a(g, w);
-			for (j = 0; j < nw && (j == 0 || asg_arc_len(aw[j]) < fuzz); ++j)
+			for (uint32_t j = 0; j < nw && (j == 0 || asg_arc_len(aw[j]) < fuzz); ++j)
 				if (mark[aw[j].v]) mark[aw[j].v] = 2;
 		}
 		#endif
-		for (i = 0; i < nv; ++i) {
+		for (uint32_t i = 0; i < nv; ++i) {
 			if (mark[av[i].v] == 2) av[i].del = 1, ++n_reduced;
 			mark[av[i].v] = 0;
 		}
